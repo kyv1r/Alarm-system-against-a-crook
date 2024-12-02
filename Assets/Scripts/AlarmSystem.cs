@@ -1,6 +1,4 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
@@ -13,30 +11,28 @@ public class AlarmSystem : MonoBehaviour
 
     private Coroutine _volumeCoroutine;
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    public void TurnOff()
     {
-        if (collision.GetComponent<Crook>())
-        {
-            if (_volumeCoroutine != null)
-                StopCoroutine(_volumeCoroutine);
+        SetVolume(_minVolume, true);
+    }
 
+    public void TurnOn()
+    {
+        SetVolume(_maxVolume, false);
+    }
+
+    private void SetVolume(float targetVolume, bool isMinValue)
+    {
+        if (_volumeCoroutine != null)
+            StopCoroutine(_volumeCoroutine);
+
+        if (isMinValue == false && _alarm.isPlaying == false)
             _alarm.Play();
-            _volumeCoroutine = StartCoroutine(ChangeVolume(_maxVolume));
-        }
+
+        _volumeCoroutine = StartCoroutine(ChangeVolume(targetVolume, isMinValue));
     }
 
-    private void OnTriggerExit2D(Collider2D collision)
-    {
-        if (collision.GetComponent<Crook>())
-        {
-            if (_volumeCoroutine != null)
-                StopCoroutine(_volumeCoroutine);
-
-            _volumeCoroutine = StartCoroutine(ChangeVolume(_minVolume));
-        }
-    }
-
-    private IEnumerator ChangeVolume(float targetVolume)
+    private IEnumerator ChangeVolume(float targetVolume, bool isMinVolume)
     {
         while (Mathf.Approximately(_alarm.volume, targetVolume) == false)
         {
@@ -44,7 +40,7 @@ public class AlarmSystem : MonoBehaviour
             yield return null;
         }
 
-        if (Mathf.Approximately(_alarm.volume, _minVolume))
+        if (isMinVolume && Mathf.Approximately(_alarm.volume, _minVolume))
             _alarm.Stop();
 
         _volumeCoroutine = null;
